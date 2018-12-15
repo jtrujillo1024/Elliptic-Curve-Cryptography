@@ -6,7 +6,7 @@ a_curve = 0; b_curve = 7 # curve parameters (y**2 = x**2 + a_curve*x + b_curve)
 Gx = 55066263022277343669578718895168534326250603453777594175500187360389116729240
 Gy = 32670510020758816978083085130507043184471273380659243275938904335757337482424
 g_point = (Gx, Gy) #generator point
-#signature information
+#signature iformation
 priv_key = 75263518707598184987916378021939673586055614731957507592904438851787542395619
 rand_num = 28695618543805844332113829720373285210420739438570883203839696518176414791234
 message_hash = 86032112319101611046176971828093669637772856272773459297323797145286374828050
@@ -49,27 +49,40 @@ def main():
     print(p_curve)
     print('\n----------Public Key Generation----------\n')
     x_pub_key, y_pub_key = ec_multiplication(Gx, Gy, priv_key)
-    print('[+] Private Key (base 10): \n{}\n'.format(priv_key))
-    print('[+] Uncompressed Public Key (NOT ADDRESS): \n04{}{}\n'.format(x_pub_key, y_pub_key))
+    print('Private Key (base 10): \n{}\n'.format(priv_key))
+    print('Uncompressed Public Key (NOT ADDRESS): \n04{}{}\n'.format(x_pub_key, y_pub_key))
 
     print('\n----------Signature Generation----------\n')
+    
     x_rand_sig, y_rand_sig = ec_multiplication(Gx, Gy, rand_num)
     r = x_rand_sig % n
     s = ((message_hash + r * priv_key)*(modular_inverse(rand_num, n))) % n 
+
+    print('Note: the sending party signs a message using the private key, the recieving party verifies with the corresponding public key')
+    print('\'r\' is the x coordinate of elliptic curve multiplication of a single use random number')
+    print('\'s\' is a combination of the message hash, r, the single use random number, and the private key of sending party\n\n')
+    print('message hash = {}\n'.format(message_hash))
+    print('single use random number = {}\n'.format(rand_num))
     print('r = {}\n'.format(r))
     print('s = {}\n'.format(s))
+    print('The signature to be verified by recieving party is (r, s)')
 
     print('\n----------Signature Verification----------\n')
+
     w = modular_inverse(s, n)
     xu1, yu1 = ec_multiplication(Gx, Gy, (message_hash * w) % n)
     xu2, yu2 = ec_multiplication(x_pub_key, y_pub_key, (r * w) % n)
     x, y = ec_addition(xu1, yu1, xu2, yu2)
+    print('Note: recieving party does NOT have access to the sending party\'s private key')
+    print('\'w\' is the modular inverse of \'s\'')
+    print('\'x\' is the x coordinate of a combination of the message hash, \'w\', \'r\', and the sending party\'s public key\n\n')
     print('w = {}\n'.format(w))
     print('x = {}\n'.format(x))
+    print('If x == r : the signature is verified.')
     if r == x:
-        print('[+] Signature Verified! [+]')
+        print('[+] Signature Verified!\n')
     else:
-       print('[-] Signature Not Verified...')
+       print('[-] Signature Not Verified...\n')
 
 if __name__ == '__main__':
     main()
